@@ -1,0 +1,10 @@
+---
+title: "Untitled"
+format: html
+---
+
+# Data
+I have already scraped the data in a seperate script. I have elected to use Steam data from user reviews. I am interested in comparing trends between reviews of games that have female protagonists versus games with male protagonists. Finding games with female protagonists was the hardest part, so I selected {list}. Then I selected games with male protagonists that I tried to map 1 to 1 with the female protagonist games (same year ± 1, similar genre, etc.) as these are likely to be potentially confounding variables in comparison. 
+```{python}
+
+```
