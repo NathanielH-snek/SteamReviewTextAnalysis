@@ -30,8 +30,8 @@ def getUserReviews(reviewAppid, params):
     return userReviews, userReviewsResponse.status_code
 
 gamesOfInterestFemale = {
-    '870780' : 'Control Ultimate Edition',
-    '752590' : 'A Plague Tale Innocence',
+    #'870780' : 'Control Ultimate Edition',
+    #'752590' : 'A Plague Tale Innocence',
     '750920' : 'Shadow of the Tomb Raider',
     '414340' : "Hellblade: Senua's Sacrifice",
     '524220' : 'Nier:Automata',
@@ -53,6 +53,7 @@ allGamesOfInterest = {
 }
 
 def parseResponse(gameId, gameTitle):
+    reviewsSkipped = 0
     reviews = []
     name = gameTitle
     reviewMax = 100
@@ -82,91 +83,67 @@ def parseResponse(gameId, gameTitle):
         #    print(f'Fail to get response for {gameId}.')
         #    return {'allReviewsGot' : 0}, []
 
-        #if response['query_summary']['num_reviews'] == 0:
-        #   print(f'No reviews: {response}')
-        #    return {'allReviewsGot' : 0}, []
-
         for review in response['reviews']:
-            recommendationId = review['recommendationid']
+            try:
+                recommendationId = review['recommendationid']
 
-            timestampCreated = review['timestamp_created']
-            timestampUpdated = review['timestamp_updated']
+                timestampCreated = review['timestamp_created']
+                timestampUpdated = review['timestamp_updated']
 
-            authorSteamId = review['author']['steamid']
-            playtimeForever = review['author']['playtime_forever']
-            playtimeLastTwoWeeks = review['author']['playtime_last_two_weeks']
-            playtimeAtReviewMinutes = review['author']['playtime_at_review']
-            lastPlayed = review['author']['last_played']
+                authorSteamId = review['author']['steamid']
+                playtimeForever = review['author']['playtime_forever']
+                playtimeLastTwoWeeks = review['author']['playtime_last_two_weeks']
+                playtimeAtReviewMinutes = review['author']['playtime_at_review']
+                lastPlayed = review['author']['last_played']
 
-            reviewText = review['review']
-            votedUp = review['voted_up']
-            votesUp = review['votes_up']
-            votesFunny = review['votes_funny']
-            weightedVoteScore = review['weighted_vote_score']
-            steamPurchase = review['steam_purchase']
-            receivedForFree = review['received_for_free']
-            writtenDuringEarlyAccess = review['written_during_early_access']
+                reviewText = review['review']
+                votedUp = review['voted_up']
+                votesUp = review['votes_up']
+                votesFunny = review['votes_funny']
+                weightedVoteScore = review['weighted_vote_score']
+                steamPurchase = review['steam_purchase']
+                receivedForFree = review['received_for_free']
+                writtenDuringEarlyAccess = review['written_during_early_access']
 
-            myReviewDict = {
-                'recommendationid': recommendationId,
-                'authorSteamid': authorSteamId,
-                'playtimeAtReviewMinutes': playtimeAtReviewMinutes,
-                'playtimeForeverMinutes': playtimeForever,
-                'playtimeLastTwoWeeksMinutes': playtimeLastTwoWeeks,
-                'lastPlayed': lastPlayed,
+                myReviewDict = {
+                    'recommendationid': recommendationId,
+                    'authorSteamid': authorSteamId,
+                    'playtimeAtReviewMinutes': playtimeAtReviewMinutes,
+                    'playtimeForeverMinutes': playtimeForever,
+                    'playtimeLastTwoWeeksMinutes': playtimeLastTwoWeeks,
+                    'lastPlayed': lastPlayed,
 
-                'reviewText': reviewText,
-                'timestampCreated': timestampCreated,
-                'timestampUpdated': timestampUpdated,
+                    'reviewText': reviewText,
+                    'timestampCreated': timestampCreated,
+                    'timestampUpdated': timestampUpdated,
 
-                'votedUp': votedUp,
-                'votesUp': votesUp,
-                'votesFunny': votesFunny,
-                'weightedVoteScore': weightedVoteScore,
-                'steamPurchase': steamPurchase,
-                'receivedForFree': receivedForFree,
-                'writtenDuringEarlyAccess': writtenDuringEarlyAccess,
-            }
-            reviews.append(myReviewDict)
+                    'votedUp': votedUp,
+                    'votesUp': votesUp,
+                    'votesFunny': votesFunny,
+                    'weightedVoteScore': weightedVoteScore,
+                    'steamPurchase': steamPurchase,
+                    'receivedForFree': receivedForFree,
+                    'writtenDuringEarlyAccess': writtenDuringEarlyAccess,
+                }
+                reviews.append(myReviewDict)
+            except:
+                print("Skipped Review")
+                reviewsSkipped += 1
+                print(f'Reviews Skipped: {reviewsSkipped}')
         if response['cursor'] == params['cursor']:
-            numReviews = response['query_summary']['total_reviews']
-            score = response['query_summary']['review_score']
-            scoreDescription = response['query_summary']['review_score_desc']
-            positiveReviews = response['query_summary']['total_positive']
-            negativeReviews = response['query_summary']['total_negative']
-            
-            gameInfo = {
-                'numReviews' : numReviews,
-                'score' : score,
-                'scoreDescription' : scoreDescription,
-                'positiveReviews' : positiveReviews,
-                'negativeReviews' : negativeReviews,
-                'allReviewsGot' : 0
-            }
-          
-            return gameInfo, reviews
+            return reviews
+        
+        if response['query_summary']['num_reviews'] == 0:
+            print(f'No more reviews: {response}')
+            return reviews
+        
         try:
             cursor = response['cursor']
             print(cursor)
             params['cursor'] = quote(cursor)
             print(params['cursor'])
         except:
-            numReviews = review['query_summary']['total_reviews']
-            score = review['query_summary']['review_score']
-            scoreDescription = review['query_summary']['review_score_desc']
-            positiveReviews = review['query_summary']['total_positive']
-            negativeReviews = review['query_summary']['total_negative']
-            
-            gameInfo = {
-                'numReviews' : numReviews,
-                'score' : score,
-                'scoreDescription' : scoreDescription,
-                'positiveReviews' : positiveReviews,
-                'negativeReviews' : negativeReviews,
-                'allReviewsGot' : 1
-            }
-            
-            return gameInfo, reviews
+            return reviews
         
         reviewMax += 100
         #reviewMax += 20
@@ -199,18 +176,14 @@ while (steamIDs):
 '''
 for key,items in allGamesOfInterest.items():
         for key,val in items.items():
-            info, reviews = parseResponse(key,val)
+            reviews = parseResponse(key,val)
             title = val.strip().replace(" ","_").lower()
             titleClean = re.sub(r'[^\w_. -]', '_', title)
-            data = [key,info,reviews]
-            if info['allReviewsGot'] == 1:
-                with open(f'{titleClean}.pkl','wb') as f:
-                    pickle.dump(data,f)
-                try:
-                    steamIDs.remove(key)
-                    print(f"{len(steamIDs)} games left")
-                except:
-                    print("Crying is a free action")
-            else:
-                print(f"Failed to get all data, Only scraped: {len(reviews)} reviews")
-                print()
+            data = {key : reviews}
+            with open(f'./data/pkl/{titleClean}.pkl','wb') as f:
+                pickle.dump(data,f)
+            try:
+                steamIDs.remove(key)
+                print(f"{len(steamIDs)} games left")
+            except:
+                print("Crying is a free action")
