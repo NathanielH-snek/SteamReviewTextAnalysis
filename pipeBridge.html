@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Check In 2</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="pipeBridge_files/libs/clipboard/clipboard.min.js"></script>
+<script src="pipeBridge_files/libs/quarto-html/quarto.js"></script>
+<script src="pipeBridge_files/libs/quarto-html/popper.min.js"></script>
+<script src="pipeBridge_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="pipeBridge_files/libs/quarto-html/anchor.min.js"></script>
+<link href="pipeBridge_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="pipeBridge_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="pipeBridge_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="pipeBridge_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="pipeBridge_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Check In 2</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="data" class="level1">
+<h1>Data</h1>
+<p>I have scraped the data in a seperate script. I have elected to use Steam data from user reviews. I am interested in comparing trends between reviews of games that have female protagonists versus games with male protagonists. Finding games with female protagonists was the hardest part, so I selected {list}. Then I selected games with male protagonists that I tried to map 1 to 1 with the female protagonist games (same year ± 1, similar genre, etc.) as these are likely to be potentially confounding variables in comparison.</p>
+<section id="section" class="level2">
+<h2 class="anchored" data-anchor-id="section"></h2>
+<div id="cell-3" class="cell" data-execution_count="46">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pickle</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> Counter</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> lingua <span class="im">import</span> Language, LanguageDetectorBuilder</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load(<span class="bu">file</span>):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> <span class="bu">open</span>(<span class="bu">file</span>,<span class="st">'rb'</span>) <span class="im">as</span> f:</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pickle.load(f)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>RE4 <span class="op">=</span> load(<span class="st">"data/pkl/resident_evil_4.pkl"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-4" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>reviews <span class="op">=</span> RE4[<span class="st">'2050650'</span>]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(reviews[<span class="dv">0</span>].keys())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>dict_keys(['recommendationid', 'authorSteamid', 'playtimeAtReviewMinutes', 'playtimeForeverMinutes', 'playtimeLastTwoWeeksMinutes', 'lastPlayed', 'reviewText', 'timestampCreated', 'timestampUpdated', 'votedUp', 'votesUp', 'votesFunny', 'weightedVoteScore', 'steamPurchase', 'receivedForFree', 'writtenDuringEarlyAccess'])</code></pre>
+</div>
+</div>
+<div id="cell-5" class="cell" data-execution_count="37">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> extractData(review):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    recId <span class="op">=</span> review[<span class="st">'recommendationid'</span>]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    reviewPlaytime <span class="op">=</span> review[<span class="st">'playtimeAtReviewMinutes'</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    earlyAccessReview <span class="op">=</span> review[<span class="st">'writtenDuringEarlyAccess'</span>]</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    votedUp <span class="op">=</span> review[<span class="st">'votedUp'</span>]</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    helpfulness <span class="op">=</span> review[<span class="st">'weightedVoteScore'</span>]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    recentPlaytime <span class="op">=</span> review[<span class="st">'playtimeLastTwoWeeksMinutes'</span>]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    text <span class="op">=</span> review[<span class="st">'reviewText'</span>]</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    trimmedData <span class="op">=</span> {</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">'id'</span> : recId,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">'playtime'</span> : reviewPlaytime,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">'recentPlaytime'</span> : recentPlaytime,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">'earlyAccess'</span> : earlyAccessReview,</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">'votedUp'</span> : votedUp,</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">'helpfulness'</span> : helpfulness</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> trimmedData, text</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> isEnglish(s):</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> s.isascii()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-6" class="cell" data-execution_count="60">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cleanData(reviews):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    languages <span class="op">=</span> [Language.ENGLISH, Language.SPANISH, Language.PORTUGUESE]</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    detector <span class="op">=</span> LanguageDetectorBuilder.from_languages(<span class="op">*</span>languages).build()</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> review <span class="kw">in</span> reviews:</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        data, text <span class="op">=</span> extractData(review)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (data[<span class="st">'playtime'</span>] <span class="op">==</span> <span class="va">None</span>) <span class="kw">or</span> (data[<span class="st">'recentPlaytime'</span>] <span class="op">==</span> <span class="va">None</span>):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> (<span class="bu">int</span>(data[<span class="st">'playtime'</span>]) <span class="op">&gt;=</span> <span class="dv">180</span>) <span class="kw">and</span> (<span class="bu">int</span>(data[<span class="st">'recentPlaytime'</span>]) <span class="op">&gt;=</span> <span class="dv">15</span>):</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>            normText <span class="op">=</span> re.sub(<span class="vs">r"[^\w\s\.,!?;:\(\)\[\]\-\+=\{\}\|\/\&lt;\&gt;.]"</span>, <span class="st">''</span>, text)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>            cleanText <span class="op">=</span> re.sub(<span class="vs">r"\[.*?\]|(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&amp;:\/~+#-]*[\w@?^=%&amp;\/~+#-])"</span>, <span class="st">''</span>, normText)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>            cleanText <span class="op">=</span> <span class="st">' '</span>.join(cleanText.split())</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">bool</span>(re.search(<span class="st">'---.*?---'</span>, cleanText)):</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">elif</span> isEnglish(cleanText):</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="bu">sum</span>(Counter(cleanText.split()).values()) <span class="op">&lt;</span> <span class="dv">5</span>:</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">continue</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                <span class="cf">elif</span> detector.detect_language_of(cleanText) <span class="op">!=</span> Language.ENGLISH:</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">continue</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>True
+A remake of one of the best game out there? OF COURSE ITS AMAZING! 9,5/10
+Next Review
+
+True
+Amazing game, just buy it! It has more action than RE 2 remake, its nice this difference! Come and enjoy killing some PRAGAS
+Next Review
+
+True
+Perfect remake of an already perfect game
+Next Review
+
+True
+I finally 100 this game, and Ive gotta say, its easily the best Resident Evil game for me. The upgraded graphics and eerie environments really pulled me in, and the gameplay was so much smoother than the original. Every boss fight had me on edge, but beating them was insanely satisfying. I loved the mix of tension, action, and exploration. Its definitely my favorite in the series!
+Next Review
+
+True
+10/10, worth my money. I almost gave 9/10 because of regenerador, Iron maiden and verdugo.
+Next Review
+
+True
+I loved the game cube version as a kid and this is a really good remake. I still prefer the original game for the charm and humor elements, but everything else is a step up here.
+Next Review
+
+True
+game was gud. Gub gub was leon kennedy and killed salazar one tap easy no kizzy then saddler 0 tap no kizzy on gawd that shi was perfection. Gub gub saves the day!
+Next Review
+
+True
+only halfway through the story but i gotta say this is such a great experience as its the first RE game ive ever played, also the atmosphere is amazing on so many levels
+Next Review
+
+True
+I enjoyed this game thoroughly, both dlc and main story. i give both 9/10, You should certainly try it for yourself, both separate ways and main game
+Next Review
+
+True
+Know the feeling of a game getting announced that gets you very hyped? Its set to release two or three years from now and every time a new gameplay reveal or a trailer is released, you get hyped even more. The game looks absolutely amazing and your expectations are through the roof as you adore what you are presented. That is what playing Resident Evil 4 Remake feels like, except you arent watching any trailers or gameplay reveals. No. You are playing the finished and released product and experiencing the pure greatness of it all. I love the original. Its one of my most memorable childhood games and one of my favorite games of all time. Honestly, Im quite critical about the games I play. Even other games that I consider my all-time favorites have flaws that I cant ignore. But Resident Evil 4 Remake? I cant think of any. As far as my video game preferences go, Resident Evil 4 Remake is literal perfection. I really cannot find anything bad to say about this other than some cut parts that, to be frank, are better off not included. Its hard to think how Capcom will top this one because they took one of the greatest games of all time and made it greater tenfold. This is a masterpiece and definitely my GOTY of 2023.
+Next Review
+
+True
+Excellent game! Runs great on my M3 Pro MacBook Pro via Whisky.
+Next Review
+
+True
+Very good remake. Now remake Resident evil 5, the best resident evil, hot take I dont care. Dead Space remake I think is slightly better but they are both great action horror shooters.
+Next Review
+
+True
+that resident guy is so evil
+Next Review
+
+True
+2019: they did it 2023: they did it again S++ quality game, an outstanding remake of the original and perfection in its own right. It also plays wonderfully with a mouse and keyboard!
+Next Review
+
+True
+Youll play it, youll love it, youll come back to it in a year or two and do it all again.
+Next Review
+
+True
+Its a good remake. I know Crowbcat made a video saying this remake lacked soul, but I thought that was hyperbolic. This is a solid remake that takes the nostalgia you remember and adds nice extras. Plus, The Mercenaries is back!
+Next Review
+
+True
+Bought the first rocket launcher I saw in the shop and never once used it. Money well spent.
+Next Review
+
+True
+Edit: it WOULD be a fun remake if you could play it. Dont buy this shit. The fucking scope is HORRIBLE to look through. I spent 8 hours crashing, redoing settings. The default settings are not even built for a human to play. The whole 8 hours of my playtime was actually just being tabbed out on google and youtube trying to figure out what the fuck is up with the low FPS. EVEN THE MAIN MENU IS LOW FPS!! WTF? I even tried turning everything down. Ask anyone about the damn rifle scope... I got to the canyon and I couldnt even get past it because the game would freeze and crash from just seeing 4 buildings and 5 villagers.
+Next Review
+
+True
+Outstanding game. I dont really post reviews, so this speaks so much to the quality of this game.
+Next Review
+
+True
+Nostalgic while feeling like a new game.
+Next Review
+
+True
+I beat this game 4 times in 1 day.
+Next Review
+
+True
+my favorate in the whole franchise. fun thing i had it on the gamecube and i wore out the dick my grandma bought a seconed copy on the ps2.
+Next Review
+
+True
+First off, the graphics are good golly, brighter than a new penny and so detailed you can count the dust bunnies under the beds. The character models are the same deal, sharper than a tack and smoother than a greased weasel. The gameplay is real zippy; you know how some games can be as sluggish as a three-toed sloth? This one is not that! The setting is thicker than a bowl of oatmeal in a fog bank, and the tension is so palpable that each creepy creak and whisper has you looking over your shoulder. The story and plot twists are juicier than a ripe peach, and just when you think you have it all figured out, another curveball smacks you right in the kisser! The sound design is spine-tingling, like the gurgling groans of the infected. It is scorching hot! If you are looking to get lost in a world of gory doom, then this is for you!
+Next Review
+
+True
+Capcom masterpiece, a very good REMAKE. Its not a remastered version so dont expect it to be as the original one, some stuff changed like maps, action commands, etc. But id say in a good way.
+Next Review
+
+True
+Your Right hand comes off?
+Next Review
+
+True
+Rubies or rubbish, it makes no difference. The price, well, thats our choice to make. Your valuables wont do you much good in the grave.
+Next Review
+
+True
+I need ada to crush my balls then call me a goodboy.
+Next Review
+
+True
+Game of the year right here
+Next Review
+
+True
+best game of re series, the thing i like the most is that we can melee people after 1 or 2 bullets depending on the enemy
+Next Review
+
+True
+I LOVE THIS GAME and the riot gun
+Next Review
+
+True
+Really impressive. The horror elements are soft, gameplaywise it is very smooth and fun.
+Next Review
+
+True
+Awesome remake of an already awesome game, does exactly what a remake should do, go above and beyond the original. The game engine is rock solid with impressive optimisation and great texture and sound quality, a true definitive edition.
+Next Review
+
+True
+I havent played the og fyi and this was amazing and I was really impressed with this and really think its a gem. I cant wait to play seperate ways. I have RE2 and got RE2 way before RE4 and I beat RE4 first; its clear that personally I find RE4 to be more fun gameplay wise and it definently had its scary moments. RE2s need to save items and conserve makes a harder and scarier experience imo. But RE4 is on offence and I appreciate that
+Next Review
+
+True
+This game was pretty good. I thought the bosses were a little underwhelming but other than that it was pretty good.
+Next Review
+
+True
+its not bad. not amazing. good for a remake.
+Next Review
+
+True
+This game is outstanding. Ez 10/10
+Next Review
+
+True
+what are ya buyin? what are ya sellin?
+Next Review
+
+True
+one of the best remakes ever
+Next Review
+
+True
+There should be a kiss the merchant option
+Next Review
+
+True
+cool remake like graphics and epic backflip man
+Next Review
+
+True
+I have motion sickness but I still wanna continue this is so good RAAH HAHA
+Next Review
+
+True
+i got the dead eye achevement
+Next Review
+
+True
+somehow never played the original... but man this remake is phenomenal
+Next Review
+
+True
+One of the best games Ive played in a while.
+Next Review
+
+True
+Game wouldve been a 10/10 but Leons dumbass refused to go with Ada again
+Next Review
+
+True
+first ever RE game and im HOOKED 10/10
+Next Review
+
+True
+Aint perfect, but its extremely memorable and fun to play.
+Next Review
+
+True
+The story for this is one of the best Resident evil games I have ever played.
+Next Review
+
+True
+Best game ever, in my humble opinion.
+Next Review
+
+True
+Thank you, doctor! Very nice!
+Next Review
+
+True
+i bought an aviator jacket just because leon had one and i thought it was cool. its the most expensive piece of clothing i own. the game is good too i guess
+Next Review
+
+True
+one of the best resident evil game
+Next Review
+
+True
+My first resident evil and i loved it
+Next Review
+
+True
+One of the best games that I have played!!
+Next Review
+
+True
+One of the best remakes I have ever played
+Next Review
+
+True
+good game. FK Denuvo though.
+Next Review
+
+True
+amazing and the DLC is sooo good
+Next Review
+
+True
+omgg i cream eberuwhere when i play this game this game lit guys plsss play omgogmgmg so addictive and so much lore and gameplay omgmg pls play if u want to buy a game super lit
+Next Review
+
+True
+I grew up watching gameplay of this game on G4 but never played it until last year. It lives up to the hype and then some
+Next Review
+
+True
+one of the best re games i have played
+Next Review
+
+True
+i really enjoy the remake for its new design
+Next Review
+
+True
+id let ada wong sit on my face
+Next Review
+
+True
+an amazing game one of the best games i have ever played i would recommend this game.
+Next Review
+
+True
+Without changing much of the game-set settings on deck, the game performs and looks very good on the oled. Despite the main menu being 30 fps for some reason, in game its actually very high and over 60 fps most of the time. The battery life was also above around 2 hours which I personally think is pretty good for a game like this and my settings. Game is very good and fun with my only complaint being near the end, the amount of hard and tricky situations you get put in feels like it starts to happen way too much and too close to each other if that makes sense. Especially when I didnt feel like this for the entire game before this started happening. These situations lose its charm of being a challenge and just becomes annoying to get through especially when instead of breakables giving you actually helpful items, it gives you money you cant use at that moment
+Next Review
+
+True
+Its like smoking a pack of Nostalgia
+Next Review
+
+True
+THIS is what a remake should be like.
+Next Review
+
+True
+If I bought a game several times on several consoles (OG and Remake included) Id say its worth recommending.
+Next Review
+
+True
+deserved Game Of The Year
+Next Review
+
+True
+My personal fave entry in the series , im not a massive fan of the ashley gameplay and that but its still great and an amazing remake.
+Next Review
+
+True
+Fantastic game with long main story, great enemy variety and diverse gameplay styles. 10/10 The Separate Ways DLC is good but short. 6/10
+Next Review
+
+True
+A masterpiece even more masterful.
+Next Review
+
+True
+came for ballastics but stayed for leon
+Next Review
+
+True
+Unfortunately, I am swooned by breedable boy tiddies I do recommend it tho!
+Next Review
+
+True
+First of all: this is a fantastic remaster. Whether youre a fan of the original or have never played a Resident Evil game in your life, I wholeheartedly recommend RE4R. Ive put a couple hundred hours into the original on the PS2. There are a lot of differences between the original and the remake (besides the obvious). Some bits of the story have been rewritten, new areas added, and enemies changed or completely removed. Its not bothersome, but you shouldnt go in expecting a 1to1 remaster of the original. My first playthrough of the remake was on Veteran difficulty. The game kept me on the edge most of the time with just about enough resources to get by, but not enough to just breeze through. The balance was fantastic, and with the addition of the new parry, I got into an addictive flow of shooting, dodging, switching weapons, and parrying. A fantastic experience, and I cant wait to get into the next playthrough on Professional difficulty. Not all is perfect though. Some of the voicework in English, German, and Russian is a bit questionable. The decision to make the Seperate Ways gamemode paid DLC also angered a lot of people, which is understandable. The addition of crafting also didnt sit well with some people, but I personally didnt mind. Its beautiful, fluid, and challenging. In some areas easier than the original, in others much harder, but damn is it good.
+Next Review
+
+True
+please know this is an excellent game even if you arent horny on main about at least one major character. like yes theyre hot for sure but also the game is very good i promise
+Next Review
+
+True
+I am now scared to leave my house because there might be bear traps in unsuspecting corners. 10/10
+Next Review
+
+True
+Amazing remake, the best of the bunch. Im so glad they remade this. Leons my favourite character in the series. The original game was already a 10/10 game, especially with mods, and this is on par with it. The only two negative things I can say about it are the narrow field of view, even with the slider set to max, and Adas new voice actress. Everything else is near perfect.
+Next Review
+
+True
+One of the best and probably my favourite survival horror game. Love it.
+Next Review
+
+True
+This game is perfection. Loved the original re4 and I love this remake so much.
+Next Review
+
+True
+Amazing remake of my childhood. I am at the water room reminiscing over some really good times.
+Next Review
+
+True
+This game is perfect for people who love action and horror!
+Next Review
+
+True
+IM HERE FOR ADA WONG.
+Next Review
+
+True
+Great game, great graphics, easier the Resident Evil 1. Its been hard to want to put down.
+Next Review
+
+True
+this game is suspenseful and fun
+Next Review
+
+True
+If you dont already know what RE4 is, you should buy this game. The game itself is great, its got one of the best New Game+ features Ive ever seen, and theres a whole second game built into it. Worth the money, no doubt.
+Next Review
+
+True
+EVRYTHING IS GOOD GREAT GAME
+Next Review
+
+True
+Great remake of one of my favorite games.
+Next Review
+
+True
+Hands down, one of the greatest remakes ever made. Its more than a fresh coat of paint they expanded the game in every aspect. The parry system feels so good every time you pull it off. You can parry a chainsaw or even a sword. The majority of the game is split between horror and action sections, and its pulled off perfectly while the original was more action focused. Ashley doesnt require herbs anymore, and her AI is way better than the original. The charms are also a nice addition and Leons one-liners will never get old.
+Next Review
+
+True
+Good game, and it keeps you engaged.
+Next Review
+
+True
+Great remix of a classic!
+Next Review
+
+True
+the game was really fun to play, the mercenaries on the other hand...
+Next Review
+
+True
+I definitely prefer the characters in the original game but if I have the choice then I would rather play the remake
+Next Review
+
+True
+village plays like a survival horror game. castle plays like a survival game. island plays like a FPS game.
+Next Review
+
+True
+Very good remake of the old classic
+Next Review
+
+True
+Interesting the way you can find and sell treasures.
+Next Review
+
+True
+had the game for a while but I am just playing now, so far have to say.. i am a fan of the old one and WOW they delivered on this one. love this remake. will update more this review as i play more.
+Next Review
+
+True
+In the past I have played the re4 remakes but this is almost an entirely different game; different map layouts, weapon choices, crafting, knife durability, new enemies, and other new content galore. I highly recommend this game to anyone who likes the horror thriller genre, and especially to those hesitant of another cash grab remake. This one is so much more than that
+Next Review
+
+True
+Game scales up as you go further. Harder enemies, more diverse locations, more fights, and you have to switch around your weapons and strategy depending on what you fight. Also the story is pretty interesting, as there are more cutscenes than the original. This is an easy purchase for anyone to make.
+Next Review
+
+True
+The only game I dont care that I paid full price for, best RE game out so far
+Next Review
+
+True
+Game is your classic RE series game. I never played the original RE4, but this remake feels fantastic. Had my Heart beating hard on the opening of the game. If you like survival horror games. It is a must play.
+Next Review
+
+True
+The reason I buy this game is because of Ada Wong.
+Next Review
+
+True
+TL;DR: its a good modern game, but a bad remake. If you dont care about the original that much, youll have a great time. When Capcom announced Resident Evil 4 Remake, I thought to myself that if they transfer the combat mechanics from Remake 2 and Remake 3, i.e. headshots not having 100 stagger chance, clumsier movement, imprecise aiming, and so on, theyre going to ruin it. All of these aspects work for a survival horror, a slower type of game. Original Resi 4 is an action/arcade game which boasts predictability, crisp and precise movement and aiming. I wanted to give RE4R a chance. I lowered all my expectations and opened my mind. Surprisingly, for the first few chapters, I got sucked into the game. I grew to like parrying, even though it can be unreliable at times. Unfortunately, as the time went on, chapters passed, a feeling started to creep in. A question. Am I enjoying RE4R on its own merits, or because its a remake of Resident Evil 4?... ...and so began the downwards spiral. I started noticing changes to encounters and mechanics not because they would improve the game, but for the sake of it: The mentioned headshots having 100 stagger chance? Nerfed. Now headshotting is very unreliable, especially at higher difficulties. Knife is too powerful? Now it has durability which is so low that upgrading it is almost a must. Even then, youll need to pick up temporary knives so as not to go bankrupt from constant repairs. Whats worse, in RE4R its your primary defensive tool. If you have no knives left, youre sht out of luck. No wonder people rush to unlock Primal Knife, a bonus weapon which can be upgraded to have infinite durability. Tactical Vest reduces damage too much? Now it can straight up completely block some damage, but is made of tissue paper and breaks after a few harder hits. Of course, repairing it very expensive. Its good only for boss fights and Professional mode. Game too easy after people learned to aim well? Now instead of creeping up on you, enemies straight up rush you, and their grabs have insane tracking. Being hit by a heavy attack does not grant you any i-frames, so you can be stunlocked to death. Leon is slow as are all his reloads. Parrying is required for defense, but Leon needs a few frames to be able to parry at all, so if you start aiming, or reloading, or changing your weapon, you cannot parry, especially at close range. This is very noticeable on Professional. At least they removed QTEs, right? Not really, they reduced them, but lets be honest: parrying is a sort of QTE. Evading literally is one, as a prompt is displayed on the screen. But oh, they added stealth! Except it works exactly like in The Evil Within, which was criticized for the simplistic, low effort way it was implemented. Back in 2014. There are some good changes, but most of them are tied to atmosphere and character writing. Completely unnecessary remake. A product of remake culture, purely for the money. I didnt even bother playing Separate Ways DLC. It can be fun, since its Resident Evil 4 at heart. Good game, but a bad remake. Buy only on sale.
+Next Review
+
+True
+i love this game so far, 5 hours in and im always excited to play more. i played on assist and its really helpful the graphics and sound is great, im having a ncie experience, no bugs or anything to really complain abouti just get lost often and when i use the map and doesnt really help me well on figuring out where im going or guiding me to my destitnation but i could just be stupid :D
+Next Review
+
+True
+good game as good or better than the og
+Next Review
+
+True
+Worth every penny. Resident Evil 4 Remake is a masterclass in how to modernize a game while still maintaining the core of what made the original so special. The OG RE4 is one of my favorite games of all time, and I was originally skeptical of the remake, but Capcom managed to keep everything that made the 2005 classic a timeless masterpiece while adding to the game and making smart changes to certain parts. They managed to retain the intensity and atmosphere of the original, and elevated them thanks to modern graphics and improved gameplay mechanics. In terms of gameplay, everything you know and love from the OG is present in the remake in its full glory, with the added mechanics of stealth and the knife parry adding new ways to approach combat encounters (The parry mechanic is by far my favorite thing added in the remake). Since the tank controls were removed in place of traditional third person movement, it allows for greater mobility in combat. To compensate for improved mobility, the enemy AI has been revamped to make the ganados more aggressive during combat and allows them to coordinate their attacks to swarm the player if they arent careful. Due to all these changes, gunfights are far more intense in the original, and somehow make the perfect gameplay loop of the original even better. The story carries a more serious and sinister tone this time around, but Capcom did a great job adapting the story to this new tone while still maintaining the B-movie camp of the original title. Many of Leons classic one liners are maintained, while plenty of new ones are added. Some characters, such as Ashley and Luis, are given huge upgrades compared to their original counterparts. Many parts of the lore are fleshed out and expanded upon. The only downside with the writing is that certain characters, primarily Salazar and Saddler, are a downgrade compared to the original. Salazar in particular went from being one of the best characters in the original to forgettable in the remake. Overall though, the story is an upgrade from the original, even if I may prefer the more campy tone of the original. Overall, RE4 Remake is the perfect example of a modern remake done right. It maintains everything that made the original game special while adding on to it in ways that make sense. It sets a new standard for survival action horror games, and is a masterpiece in every single way. This is easily my favorite game from 2023. Final Rating: ILL BUY IT AT A HIGH PRICE 10/10
+Next Review
+
+True
+Its just like a remaster should be made,and not a cash grab
+Next Review
+
+True
+want to bash my head onto my wall but great game!
+Next Review
+
+True
+Played this game as a kid on the GameCube, love coming back to it for that nostalgia hit all over again.
+Next Review
+
+True
+everyone in fact... did not go to bingo
+Next Review
+
+True
+game is good but it missing some fight seen comapare to oldn og resident evil 4
+Next Review
+
+True
+Top ten Game of all time
+Next Review
+
+True
+thank you capcom for the amazing character designs! (ada is so fine)
+Next Review
+
+True
+2nd best resident evil to re2
+Next Review
+
+True
+Simply excellent. Keeps a lot of the original stuff while adding a bunch of quality of life elements, gameplay mechanics, and an absolutely gorgeous graphics in a remaked package. And also the knife parry is the coolest gameplay addition
+Next Review
+
+True
+Lots of reused assets, but it turned out to be an awesome game regardless
+Next Review
+
+True
+I waited so long for this, it was worth the wait - Brilliant remake. 11/10
+Next Review
+
+True
+A Masterpiece. It refreshed my memory for the original RE4 back in 2005 or so, I cant believe I bought a Gamecube just for RE4. We were all young once.
+Next Review
+
+True
+I was so excited for RE4 Remake when it was first announced. I mean like a lot of people, its my favorite game ever made. I had so much faith in Capcom that they would nail it out of the park. Thank God they did because my heart wouldve shattered into a million pieces. My favorite game of all time got remade perfectly. I cannot express how grateful I am from being able to feel the exact same way as I did when I first played the original. Buy the game, buy separate ways dlc. Heck even take time to download some mods and randomize the game up if you want. The game is amazing, and you just have to see for yourself. Enjoy. This game goes down in history, and sits proudly on top with the original game.
+Next Review
+
+True
+ohhhh.... ohhh my lord. ohhhhh... its beautiful
+Next Review
+
+True
+10/10 - Masterpiece Resident Evil 4 Remake completely eclipses its predecessor and modernizes a beloved classic. Capcom perfectly blends action horror gameplay and adds tons of depth, mechanics, and replayability from the original. The story is revamped, adding more depth and nuance to characters, especially Ashley, Ada, and Luis. Capcom does a great job modernizing the dialogue and storytelling without losing the campy charm that defined the original. Leon is much more agile, making dodging, parring, and countering very responsive. The enemies are more aggressive and that added much needed tension to encounters. I was most impressed by the graphics. The visual overhaul on the RE Engine is stunninglighting, textures, and environmental detail are meticulously crafted to create an atmosphere thats both beautiful and deeply unsettling. While the over-the-shoulder camera adds intensity to the action, at times it feels a bit too close to Leon, especially in tight spaces. This can occasionally obstruct your view of incoming enemies or obstacles, making certain encounters feel more claustrophobic than intended. However, it doesnt detract significantly from the overall experience, as the games tension thrives on these moments of close-quarters combat. Resident Evil 4 Remake is absolutely worth playing whether youre a longtime fan or a newcomer to the series.
+Next Review
+
+True
+WHAT A GAME. Ive loved this franchise dearly but never really got around to playing RE4 when it first came out on the gamecube by wow this game really captivated me. i reccomend this to newcomers of the series !!
+Next Review
+
+True
+Its a very good game.
+Next Review
+
+True
+I just started playing for 4 hours but im loving it and cant wait to go on with the story. really reccomend 10/10
+Next Review
+
+True
+This game makes me blue chew levels of hard
+Next Review
+
+True
+This Resident Evil title feels like Action Horror. Its fast paced, FUN and even a little bit scary at times. Capcom consitently delivers a solid product when it comes to RESIDENT EVIL and is in my opinion, deserving of the hard earned money gamers spend. Its another great addition to a solid franchise that always knows how to entertain.
+Next Review
+
+True
+Played it on the PS4 and PS5 Last Year, still holds up as an amazing game, wish it was more moddable tho LOL.
+Next Review
+
+True
+This game sets the bar for what a remake should be
+Next Review
+
+True
+I would sell my soul to play this game for the first time again
+Next Review
+
+True
+Amazing gameplay and story so far I love it!
+Next Review
+
+True
+man i love ada wong
+Next Review
+
+True
+Super fun game, but those facehugger mfs can burn in hell. Highly recommend
+Next Review
+
+True
+My inner child is so happy. This was amazing. replay value and everything. Thank you.
+Next Review
+
+True
+my ears are bleeding from ashleys beautiful screams
+Next Review
+
+True
+I am a HUGE fan of Resident evil, and these remakes keep getting better. I am a big fan of the merchant system just like i was a big fan of it in RE8. The replayablity of this game is also here. With the challenges that unlock new items it gives a lot to do in multiple runs. By far one of the best Resident Evils.
+Next Review
+
+True
+Loved every moment of it. Played the original RE.4 and playing the remake version just brought back a lot nostalgia. The graphics,environmental beauty,etc were all just perfect.
+Next Review
+
+True
+i love mugging spanish people (my laywer advises i say this is a joke)
+Next Review
+
+True
+outstanding game goes hard on the main story
+Next Review
+
+True
+Remember resident evil 4 from your childhood ? try to look for a gameplay video, the graphic is actually not as good and as realistic as how you remember it. However this game is it, it is exactly RE4 in the graphic quality that you remember (or how you imagine the original RE4 is i suppose). Plus you got some more challenge, less cringy dialogue and general quality of life improvements like attack blocking with knife.
+Next Review
+
+True
+One of my favorite games of all time. Id pick the original if I had played that first instead of the remake. I played the game plenty of times, and enjoy the village scenery a lot. Also Leon and Ashley are cool. 10/10 game. Would recommend.
+Next Review
+
+True
+Lots of effort put into this game
+Next Review
+
+True
+love this retelling of resident evil 4 brings back memories when me and my friends played the original on PS2
+Next Review
+
+True
+i love u leon s kennedy
+Next Review
+
+True
+resident evil omg when the residents are evil the residents bingo? wheres everybody going? bingo?
+Next Review
+
+True
+playing this is not enough I need to wear his skin
+Next Review
+
+True
+One of my favorite for sure.
+Next Review
+
+True
+One of my top 5 single player games of all time honestly, looks great, sounds great, plays like a dream, I cant get enough of it. Old RE fans and new will enjoy game does differ slightly from original 4 but is extremely faithful and I feel like what was changed was tastefully done so
+Next Review
+
+True
+Im a huge fan of Resident Evil and my favourite was Resident Evil 4. When this remake came out I thought it was so much better than the original and this game is by far my favourite game ever. This game did a good job with staying to the original story except for cutting out the U3 boss in Leons story which I think makes a lot of sense. In the original the U3 kind of just felt like an unnecessary road block that didnt really make sense to have as a boss. Overall I feel like the story is cleaned up more than the original game. The gameplay feels so much better than the original and the combat really makes Leon feel like a special agent. I really like the new parry system with the knife and it feels really great to parry things almost every attack. It also really makes Krausers boss fight feel much better since in the original you were going up against a fast solider who has been messing with bio-weapons to make him stronger, but you play as a very stiff Leon having to fight Krauser with tank controls. I think the Mercenaries was also very well done and I so glad they made Luis a playable character in this mini-game. It would have been nice to have Ashley in the Mercenaries and have her lantern kill the Ganados. If you own this game but havent bought Separate Ways yet then please get on it. This DLC was so much for fleshed out than how the original Separate Ways just reused a lot of areas from the Leons story. In my opinion I think that Ada is much better to play as because she as the added ability of using the grapple gun on enemies. I also like that all the things that were cut from Leons story was added into Separate Ways to fit the spy theme of this DLC. If your thinking about getting this game then I think you definitely should. I think you would be missing out on an amazing game.
+Next Review
+
+True
+Greatest third person shooter of all time, again.
+Next Review
+
+True
+as a long time fan of Resi Evils the remakes have all been a joy to play, this one not being the least! fantastic retelling of a classic game. My experience was the full fat graphical quality and the game is amazingly atmospheric with all the settings ramped to max... its very pretty too. i did encounter terrain glitches through some outside areas but these are usually fixed with a restart.
+Next Review
+
+True
+this morning, I was cleaning my front yard and I saw a man with a brown jacket fighting the village then I saw an asian chick flew right above me, she wink at me and I fell on my knees. I will never ever forget the asian chick.
+Next Review
+
+True
+This game looks great, runs great, and feels soooooo smooth to play. Im only 3.5 hours in on this game and Im having a blast. Not as terrifying as Resident evil village, but if you enjoy the Resident evil franchise, youll love this game. I would recommend getting it while on sale if youre gaming on a budget, but if you have the space for it, I would absolutely recommend getting this game.
+Next Review
+
+True
+Best game made in a while! Had a ton of fun! You can play any weapon you like say: Base gun, Matilda, SkullShaker, Riot Shotgun, Bolt action sniper, Red 9, TPMP...etc (except Crossbow which...wooooorks? kinda?? but requires alot of prep) until the end. Best Parry mechanic in any RE game, very accurate real-time hitbox (one of the best ive rarely seen as it follows your character to the inch) soundtrack is phenomenal, exploding Ganado heads never felt so satisfying, it honored the OG if you are nostalgic. The Hardest Professional difficulty isnt just ramp up of enemy damage and health (looking at you Village of Shadows) you get different enemy placements, new saves placements, some different enemy spawns, AI becomes more aggressive, early full tune-up access, more expansive Merchant items, and more rewards. It teaches you to use your environment which you would normally brush off quickly on standard difficulties since your loaded(such as explosive barrels, burning lanterns, molotov and dynamite that enemies throw at you to your advantage) to save as much ammo as possible for when you REALLY need them! Satisfying gameplay that rewards skillful plays and unlockable weapons and constumes adds alot to the replayability,(especially if you got the Separate Ways DLC). Mercenaries is the only iffy thing because it is limited to 150 kills but i guess you could fix that with mods. If you enjoy the game dont forget to try a randomizer and enjoy being in a mess :P. Anyway Have fun!
+Next Review
+
+True
+People will probably want to burn me for this, but after all the hype about the best resident evil getting a remake I just expected something ... different? Dont get me wrong, its a fantastic remake and a great game, I just didnt enjoy it at all. Leons movements are slow, while the enemy ones are faster and the camera angle is just atrocious. Also ... I know Leon is a handsome guy, but did his back really have to take up 1/3 of the screen all the time? I dont know .... maybe its a me-problem, but after the first half I just wanted the game to finally end. Felt more like a hord shooter than a resident evil.
+Next Review
+
+True
+not gonna lie, this game is amazing
+Next Review
+
+True
+Cant recommend this game enough, 10/10. Still cant believe Capcom actually managed to pull off a remake of one of the best games ever made, and then make it better.
+Next Review
+
+True
+Separate Ways They have Ada Wong being voiced by a 50 year old woman. I could not endure this DLC after the first cut scene. I pretty much just donated money on this DLC and have not touched it since.
+Next Review
+
+True
+re4 but a horror game
+Next Review
+
+True
+This is a shining example of how to remake a classic video game. Capcom was definitely getting their footing with the remakes of Resident Evil 2 3, but they absolutely nailed it with the Resident Evil 4 Remake. Almost 100 faithful to the original game, fans of the original and newgen players alike will have an amazing time playing this. Excellent graphics, gameplay, storytelling, and replayability.
+Next Review
+
+True
+Can not reccomend this game enough. 10/10
+Next Review
+
+True
+best game ive ever played
+Next Review
+
+True
+This game has so many awful mechanics that rely on RNG 0/10 would play again
+Next Review
+
+True
+Wheres everyone going? Bingo? - Best gaming protagonist
+Next Review
+
+True
+You know one thing that makes a remaster really great? When the game they remaster was really great.
+Next Review
+
+True
+Its a must-play game of the survival horror genre. It is not as scary as the RE2 Remake but is way ahead in combat mechanics.
+Next Review
+
+True
+9/10 - Perfect action-horror gameplay with plenty of content, amazing replayability and drop-dead gorgeous graphics, marred only by some badly directed cutscenes and voice acting.
+Next Review
+
+True
+First time to play RE4 and its been great.
+Next Review
+
+True
+this game scares the crap out of me.
+Next Review
+
+True
+This game is literally broken in an extremely blatant way. You cannot even delete your saves. I know that sounds hard to believe but its true. And who would even care about that right, I mean whatever? Oh, except for the fact that theres a bug in the game that makes it take longer and longer to start up the more save slots are used until youre waiting almost 5 minutes every time you start the game. Not only that but you used to be able to trick steam into letting you delete files and not have the cloud re-download them, but Capcom seems too have decided to break the game even more so now if you want to delete even just 1 save you have to delete everything including every achievement and unlockable in the game. Of course Capcom will probably keep doing this garbage in the future because everyone gave the game great reviews anyway not caring that it is literally BROKEN. The game isnt even that good anyway, just okay,or maybe its just that Capcom being trash soured me on the whole experience.
+Next Review
+
+True
+Game wont even launch with a high-end computer. It worked at first but now I cant even play it, wont even launch, no idea what updates they did but this is unacceptable.
+Next Review
+
+True
+Best game in this universe
+Next Review
+
+True
+Best Resident Evel game ever
+Next Review
+
+True
+A really great buy. Its that good of a remake. Words cannot describe it. You gotta play it. Whether old school gamer with nostalgia, or a newcomer walking in the shadows of giants. Resident Evil 4 brings all the action. All the gore. All the explosions. And all that Capcom goodness to the table.Whats there to lose?
+Next Review
+
+True
+I like shooting sick Spanish hillbillies and stealing everything that shines from their homes.
+Next Review
+
+True
+I have trouble finding games that keep me immersed, but I am really enjoying this game Also Leon is hot
+Next Review
+
+True
+A very solid remake. What they did for a remake of a cheesy, yet lovable classic from 05 was pretty damn good in terms of a more serious re-telling. Granted, a lot of classic lines, weapons like the PRL-412, and loads of other things and such were omitted, but some of it was given a nod or two, whether via dialogue or an achievement. (sadly, it cant be said for the PRL.) And they did Luis and Ashleys characters SO much justice. Way more development and attachment to them than in the original. (Not that the original didnt try to do that, of course.) As for how combat, weapons, and enemies go? WAY more faster than the original, Ill admit. But once you get the hang of it, prepare to kick ass. SOLID 10/10. If you loved the original, Id say give this a try, too.
+Next Review
+
+True
+leon is the best there is no debate trust
+Next Review
+
+True
+mboga cant wait for more leon n ada. Ochji
+Next Review
+
+True
+LEON KENNEDY SMELLY. nah but this games 20/10 just as good as OG, in some aspects even better. my dad hits me sometimes and my mom just stands idly by
+Next Review
+
+True
+An already great game with some great graphics
+Next Review
+
+True
+Game so good I immediately started replaying it. A lot has been said about RE4 and its remake so ill just say its literally the definition of a fun video game.
+Next Review
+
+True
+i love you mr.kennedy.. i want you forever and ever... nobody is gonna take you away from me mr.kennedy..
+Next Review
+
+True
+One of the best games ever made. Perfect combo of new mixed with old aspects of the original game. 10/10
+Next Review
+
+True
+Awesome game, Its like nostalgic playing RE4 back in the 2000s , Really would suggest to try Mercenaries with Wesker, Moves are just flawless and he is really not from this world man:)
+Next Review
+
+True
+why regenerator and wesker in remake are THICC and have JIGGLE (regenerator ofc)
+Next Review
+
+True
+Really good Remake, But alot of cut content
+Next Review
+
+True
+WE CAN FUCK ADA WONG MOD IN THE RECENT UPDATED SCENERY OF SEX EDUCATION VERSUS DE DANTES ANNOMALLY SEX CUCUMBER
+Next Review
+
+True
+im literally Leon. S Kennedy
+Next Review
+
+True
+I never get bored playing this game from the regular version in 2005 until the remake became my favorite game
+Next Review
+
+True
+Leon has the juiciest fattest ass ive ever seen holy fuck i couldnt make it 30 seconds into that intro cutscene
+Next Review
+
+True
+Somehow took a perfect game from 2005 and made it better. A true masterpiece.
+Next Review
+
+True
+Great story, perfect combat system and is fucking graphically next level! this game and its OG version are must plays!!!
+Next Review
+
+True
+The residents are infact evil (Im sure someone already said that)
+Next Review
+
+True
+58 hours wasted..... gone..... all saved files and progress gone for no fucking reason than this buggy pos game. Fix your damn game. every single play has been filled with crashes, freezing start ups, missing textures, fall through the floor bugs and now this. Holy fuck this game is beyond broken for full price developers should be ashamed it runs this much like trash.
+Next Review
+
+True
+Plays amazingly on PC even on Medium Settings or Ultra Settings. Definitely worth picking this one up if you are a newcomer or veteran RE Fan
+Next Review
+
+True
+A good classic made better.
+Next Review
+
+True
+The best game of the last 5 years in my opinion
+Next Review
+
+True
+It was perfect, perfect, everything down to the smallest detail. The original game and the remake stand on their own business but this game is practically masterful just like the Dead Space Remake is. I genuinely cant think of anything wrong with this game that arent just small petty things that dont really matter unless youre a zealot for the original. But yea game is perfect play it.
+Next Review
+
+True
+plz capcom plz make all unlockbles dlc please capcom
+Next Review
+
+True
+I love the original, Ive played it multiple times across PC and consoles, and the remake is super good and faithful. I feel like, besides a few things I loved in the original, like the ride to the Mendez fight, a lot of it was done justice and some things were even improved, like the El Gigante fight at the castle being in the castle as a hide-and-seek sort of section instead of just being a section where you run from it in a canyon. There are so many references, and my biggest thing is how the game gives YOU the power in scenes that, in the original, were just cutscenes. For instance, the Krauser fight - You have to fight him with your knife and it is RAW. In the original, if you remember, it was all QTEs. This carries through to little features, like how you can shoot the communication devices Salazar uses in the castle. Leon only did that once in a cutscene, but now you can do it if you dont want to hear his dialogue, which feels promising for future replays. Final thing; THE MERCENARIES. OUGH, this is an amazing mode. I love the RE4 Mercenaries but it felt like a gimmick. Even with similar maps, and the same amount of maps, Mercenaries is RAW. It goes so hard. I love it. I love how the character choice feels more important - If I play Hunk I can tear through enemies but Im not as defensive as I am offensive, if I play as Krauser Im not too good on firearms or ammunition but that knife can OBLITERATE enemies. Anyway, all I can think about is playing more of this remake. Truly a 10/10 experience... minus, yknow... a certain voice that doesnt fit a certain character as it lacks any expression or personality... but that isnt a world-ending issue.
+Next Review
+
+True
+beat this game on my playstation and bought it on my pc recently for mods didnt play the original but this shits goated i played all the remakes though started being a fan back in april of 2024 because of RE2R huge fan of the franchise now i have every mainline RE game bt dubbs if capcom doesnt make leon the main character in RE9 i will call in a bomb threat too capcoms studios PLEASE CAPCOM!!!....I NEED LEON BACK IN A GAME!!! AHHHHHHHHHHHHHHHHHHH!!! love you capcom need more leon though
+Next Review
+
+True
+Bro why cant I just buy the treasure DLC separately, instead I have to buy the gold editon for half of the price of the regular re4r?
+Next Review
+
+True
+great game that brings back such a childhood memory when i played it on ps 2. Although there are some elements are added in the game but it still does not delete the main essence of the game
+Next Review
+
+True
+This game I played when Resident Evil 4 came out in my teens since the PS2 era and I played it over and over again but now with the new remake this game is something quite new and mixes with the gameplay style from Resident Evil 2 and Village and it hits different with the new story and the direction of Luis Sera other than an side character and add more screen time and way better experience and faithful to the original and same thing with the separate ways and reminded me some throwbacks and also a veteran from Resident Evil 4 gamer. This game is recommended for old and new resident evil fans. missed those cheesy lines and brought the f-bomb lol and Ashley is way better than the classic. and time to put some John Wick moves
+Next Review
+
+True
+The best remake Ive ever played
+Next Review
+
+True
+White boy geeked up on fent simulator
+Next Review
+
+True
+amazing story and graphics, very well optimised for its graphics
+Next Review
+
+True
+Resident Evil 4 (2005) is often regarded as the best RE game. From changing to a completely different camera style, to revolutionizing how action and survival games are played, Capcom persists at developing some of the most captivating gameplay with Resident Evil 4 (2023). I freakin love this game, bro.
+Next Review
+
+True
+best game ever made (the original is better)
+Next Review
+
+True
+These residents are pretty evil NGL!
+Next Review
+
+True
+IN LOVE WITH THIS GAME (and Leon ofc) loved both og and r Leons lines are so goofy, adore them and the graphics of this game are amazing totally recommend to all (both re fans and those that are starting with this franchise )
+Next Review
+
+True
+has evil residents One of the best of the series just missing Leon saying Women
+Next Review
+
+True
+leon s kennedy is incredibly hot and i like shooting stuff 10/10 would recommend to literally anyone
+Next Review
+
+True
+awesome game but fs get ts on sale
+Next Review
+
+True
+The game is good, dont get me wrong! but, its the stupid little annoyances that bring this game down. The hit box is so bad that you miss your shots all the time, even when the enemy is right in front of you. Please dont waste your time trying to parry, I think it only works around 20 of the time, which is just slightly better than how often the dodge works. Ive tried to play more, but I think im just going to uninstall the game, come to the conclusion, I just cannot be bothered to play it! I am so disappointed.
+Next Review
+
+True
+super fun. leon is hot af, love modding the game and putting him in questionable outfits. worth buying this just for that!
+Next Review
+
+True
+Its a hit or miss, but mods make the game play interesting. Big miss on the lack of resources and the short amount of time to beat the game. Honestly this was a downfall on beating the game less then 5 half hours, they should of made a score based time so you actually play the game, it takes time but you can beat the game on professional with killing all enemies in less then 5 half hours, but pretty close to the S+ just missing that time to reach. All you need is 3 or 4 weapons and make use of you resources but for me some areas I had lil or no ammo but possible. Took quite a bit of time but I had my 1st weapon upgraded max out by chapter 10 with the rest a mix of damage upgraded more often then any other stats at level 1 to 3. Mods make it interesting and I really the 2005 OG which is why I got the 2023 version, and the graphics are one of the perks that made me enjoy and hate the game, or watch the different death animations.
+Next Review
+
+True
+One of the most fun games i have ever played, i regret not picking this game up sooner since it has become my number 1 singeplayer game, i can see myself coming back to this game with how much replayability there is in this game even with 47 hours on this game i still havent done everything that there is to do and i should probably mention that mods exist and extend that replayability level. i would explain how great this game is in every way shape or form but i wanna avoid spoiling the soul reading my review rn so please just pick up the game if you can and experience this master piece for yourself.
+Next Review
+
+True
+Leon can do overtime with me anytime he wants
+Next Review
+
+True
+best resident evil game :)
+Next Review
+
+True
+GREAT! Everything I expected and more! Leon, Ashley, Luis, Ada, GREAT! Anyone who agrees should comment duo. Edit: Ive played a bit more and... IT GOT EVEN BETTER! Without these amazing twists what would even happen? Great game. Best game I have a Steam. There are only like five bad reviews and one of them is bad because you never get to see Ashleys panties like you could in the original. Well, at least she isnt just a tiny model with a flat, very, VERY dull material. He also complained that you couldnt look up into her skirt and watch her yank it down and yell, pervert! at you. Even though, she was quite right about the person who wrote that review. For the record both Leon and Ashley look MUCH better. And he shouldnt have anything against the Dev(s), because for some reason everyone if deeply, deeply attracted to Ada, who I, personally dont really like. Shes fine, but, meh. Behavior, okay. Voice, not really good. Looks, no. I dont know why. Luis Serra is probably one of my favorites. Some of the voice lines through, like, the first half of the game were kinda flat. Overall, 10/10. Edit: why did you tell me to shoot all the fish in the water? Edit: kudos to whoever got this far.
+Next Review
+
+True
+got something that might interest ya, stranger.
+Next Review
+
+True
+resident evil is the best
+Next Review
+
+True
+Super fire game, HIGHLY recommend
+Next Review
+
+True
+Id Cuddle this game to sleep
+Next Review
+
+True
+Even better than the original
+Next Review
+
+True
+The replay value is tops. Highly recommended.
+Next Review
+
+True
+I heavily recommend this 100/10 it was unbelievably enjoyable, I enjoyed every moment.
+Next Review
+
+True
+One of the best remakes ever! &lt;3
+Next Review
+
+True
+epic game were is the nearest gun
+Next Review
+
+True
+i feel like every time i download a single mod my save file just decides to kill itself, loss ALL MY PROGRESS FOR NOTHING and make me stuck on a loading screen forever. i dont know if its a me thing situation because i see everyone enjoy the mods but when i do it, i get punched in the gut because of it. if anyone got solutions on my problem because i litrally tried EVERYTHING to fix it, but to no avail.
+Next Review
+
+True
+LEON IS GOOD GOOGLY MOOGLY
+Next Review
+
+True
+I just committed genocide in a small and remote village in Europe... wait a minute isnt that the same plot as Resident Evil 8 Village?
+Next Review
+
+True
+Great nostalgia for the OG one with a lot of great upgrades.
+Next Review
+
+True
+This game is alright, The OG is way better than this as, We speak on it doesnt have the sexy voice Ada wong from the OG game.
+Next Review
+</code></pre>
+</div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

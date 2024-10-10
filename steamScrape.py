@@ -4,6 +4,8 @@ from time import sleep
 import os
 from dotenv import load_dotenv
 from urllib.parse import quote
+import pickle
+import re
 
 load_dotenv()
 
@@ -149,8 +151,7 @@ def parseResponse(gameId, gameTitle):
         #reviewMax += 20
         sleep(1.5)
 
-import pickle
-import re
+
 
 steamIDs = ['870780','752590','750920','414340','524220','1265920','108710','532210','1659420','814380','1687950','2050650']
 
