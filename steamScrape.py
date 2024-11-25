@@ -33,7 +33,6 @@ def getUserReviews(reviewAppid, params):
 
 gamesOfInterestFemale = {
     '870780' : 'Control Ultimate Edition',
-    
     '752590' : 'A Plague Tale Innocence',
     '750920' : 'Shadow of the Tomb Raider',
     '414340' : "Hellblade: Senua's Sacrifice",
